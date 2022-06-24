@@ -1,0 +1,40 @@
+.include "x16.inc"
+MACPTR := $FF44
+
+  .import _LFN
+  .import _bank
+  .import _buffer ; memory address of the current buffer offset
+  .import __oserror
+  .export _macptr_size
+
+
+
+.bss
+macptr_arg: .res 1 ; pre-computed size argument to hand to MACPTR
+
+.code
+; stub - this should probably set the streaming stop offset so pcmplayer will
+; stop playing as of the last (if any) sample read from the file.
+bomb:
+  sta __oserror
+bomb2:
+  lda #0
+  ldx #0
+  rts
+
+
+; reads num_bytes (global variable) from an open LFN into a ring buffer
+; of 1 bank size (bank number is a global) LFN is assumed to be prepped
+; with all of the SETNAM SETLFS OPEN steps done and that everything
+; is copesetic at this time.
+
+.proc _read_audio: near
+
+  bcs bomb
+  lda macptr_arg
+  ldx _buffer
+  ldy _buffer+1
+  jsr MACPTR
+  bcs bomb2 ; MACPTR returns CS if the LFN is an unsupported device.
+
+.endproc
